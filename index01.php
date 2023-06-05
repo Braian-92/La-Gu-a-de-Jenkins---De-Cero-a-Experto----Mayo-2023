@@ -239,3 +239,207 @@ Clase N° 14
 Clase N° 15
 Finished: SUCCESS
 ///////////////////
+
+//! nuevo comando 02
+
+#!/bin/bash
+nombre="Braian"
+curso="Jenkins"
+#Empezar el loop
+for a in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+do
+	#if es igual a 8 que el loop descanse
+	if [ $a == 8 ]
+	then
+		sleep 5
+		echo "A descansar de clase $nombre"
+	fi
+	echo "Clase N° $a"
+done
+sleep 5
+echo "Bien $nombre, terminamos las clases de $curso, nos vemos"
+
+###########################
+
+CREAR comando desde la consola
+
+//! tire un reboot para volver al inicio ya que encontraba dentro de docker
+cd jenkins => vamos a la carpeta jenkins
+vi jobscript.sh => creamos el archivo 
+cat jobscript.sh => visualizamos el contenido
+./jobscript.sh => para ejecutar
+(como no nos dejo ejecutar por falta de permisos tiramos el siguiente comando para verificar a que es accesible el archivo)
+ls -l jobscript.sh
+
+//! -rw-rw-r-- 1 osboxes osboxes 320 Jun  4 23:20 jobscript.sh
+
+######### EJEMPLO DE SIGLAS
+En el ejemplo anterior, "x" da permisos de ejecución, "w" es para escritura y "r" da permiso de lectura.
+
+en neustro caso aparecio solamente -rw-rw-r-- que seria lecto escritura pero no es visible la ejecución "x"
+
+sudo chmod +x jobscript.sh => agregar permisos de ejecución al archivo
+y luevo volver a intentar ./jobscript.sh (funciono)
+
+//! pasar el archivo al contenedor
+
+como cerramos todo vamos a tener que volver a prender docker}
+si ponermos "docker ps" podemos ver que no hay nada activo
+entonces pasamos a prenderlo con el siguiente comando "docker-compose start"
+
+docker cp jobscript.sh jenkins:/opt => copiar el script al contenedor
+docker exec -ti jenkins bash => para ingresar al contenedor
+ls => listar directorios
+cd opt
+./jobscript.sh => ejecutarlo dentro del contenedor
+
+//! ejecutar comando guardado desde la interfaz web de jenkins (ya que se encuentra dentro del contenedor)
+
+## esta vez en ejecutar ponemos
+
+/opt/jobscript.sh
+
+exit => salir del contenedor de docker
+
+############## ingreso de variables desde jenkins [nombre="Braian" curso="Jenkins"]
+
+vi jobscript.sh y eliminamos las variables
+i para editar escape para salir :wq! para guardar
+
+######## el comando quedara de esta manera ######
+#!/bin/bash
+#Empezar el loop
+for a in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+do
+	#if es igual a 8 que el loop descanse
+	if [ $a == 8 ]
+	then
+		sleep 5
+		echo "A descansar de clase $nombre"
+	fi
+	echo "Clase N° $a"
+done
+sleep 5
+echo "Bien $nombre, terminamos las clases de $curso, nos vemos"
+############################################################
+
+ docker cp jobscript.sh jenkins:/opt => copiar el archivo el contenedor
+ // consola ---  Successfully copied 2.05kB to jenkins:/opt
+
+ docker exec -ti jenkins bash => para ingresar al contenedor nuevamente
+ cd opt
+ ./jobscript.sh
+ /////////////////////////// no se visualizan las variables
+ Clase N° 1
+ Clase N° 2
+ Clase N° 3
+ Clase N° 4
+ Clase N° 5
+ Clase N° 6
+ Clase N° 7
+ A descansar de clase
+ Clase N° 8
+ Clase N° 9
+ Clase N° 10
+ Clase N° 11
+ Clase N° 12
+ Clase N° 13
+ Clase N° 14
+ Clase N° 15
+ Bien , terminamos las clases de , nos vemos
+ ///////////////////////////
+
+ para agregar las variables ir a la tarea de la interfaz de jenkins y agregarlas en la parte superior del codigo
+##########
+nombre="Braian"
+curso="Jenkins"
+/opt/jobscript.sh
+##########
+
+de esta menera no toma las variables aunque intentando de esta manera manualmente por consola funcional
+
+cd opt
+export nombre="Braian"
+export curso="Jenkins"
+./jobscript.sh
+
+##########################
+metodo de ingreso de variables por parametros probenientes de jenkins
+
+////
+#!/bin/bash
+nombre=$1
+curso=$2
+#Empezar el loop
+for a in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+do
+	#if es igual a 8 que el loop descanse
+	if [ $a == 8 ]
+	then
+		sleep 5
+		echo "A descansar de clase $nombre"
+	fi
+	echo "Clase N° $a"
+done
+sleep 5
+echo "Bien $nombre, terminamos las clases de $curso, nos vemos"
+///
+nuevamente moverlo al contenedor despues de guardarlo
+
+########## ahora desde el editor de interfaz de jenkis cambiar el comando por parametros a
+
+##########
+nombre="Braian"
+curso="Jenkins"
+/opt/jobscript.sh $nombre $curso
+##########
+
+///////////////// Salida (ahora podemos ver que las variables ingresar de manera externa en jenkins)
+Clase N° 1
+Clase N° 2
+Clase N° 3
+Clase N° 4
+Clase N° 5
+Clase N° 6
+Clase N° 7
+A descansar de clase Braian
+Clase N° 8
+Clase N° 9
+Clase N° 10
+Clase N° 11
+Clase N° 12
+Clase N° 13
+Clase N° 14
+Clase N° 15
+Bien Braian, terminamos las clases de Jenkins, nos vemos
+/////////////////
+
+Otro metodo para ingresar las variables de manera externa
+
+##########
+########## (pero en el archivo ya tendriamos que borrar las inicializaciones de las variables)
+export nombre="Braian"
+export curso="Jenkins"
+/opt/jobscript.sh
+##########
+
+
+######################## JOBS PARAMETRIZADOS #################
+
+RESUMEN: son como funciones necesitan parametros para incializarse
+
+En editar aparece una opcion que dice:
+Esta ejecución debe parametrizarse -> Parámetro de cadena
+este permite ingresos multiple (como si fueran las variables multiples que se envian por postman)
+
+y en ejecutar colocamos el siguiente comando "/opt/jobscript.sh" ya que los parametros vienen configurandos en el job
+
+en este caso ya no vamos a nesesitas estos metodos
+##### Metodo 01
+nombre="Braian"
+curso="Jenkins"
+##### Metodo 02
+nombre=$1
+curso=$2
+############## 
+sino que tenemos que eliminar directamente las variables del script, y ahora cuando ejecutemos el script nos va a pedir los parametros
