@@ -1,3 +1,4 @@
+macloujulian@gmail.com mail de profesor del curso
 https://www.osboxes.org/ubuntu/#ubuntu-22-10-vmware
 
 la clave del sistema es la misma que el usuario
@@ -141,4 +142,100 @@ INFO ##### hay que buscar un adaptados que se encuentre sin ip en innet en nuest
 
 instalar esta app para resetear el adaptador y luego echar un reboot para que los cambios se efectuen
 sudo apt install ifupdown
+sudo ifup enp0s8
 (reboot reiniciar la pc desde comando)
+
+-- 192.168.1.120 text manteniendo la misma red (funcional el ping pero no me da conexion al ssh)
+
+#######################
+NO FUNCIONO EL METODO DE PONER LA IP STATICA Y SE RESTABLECIO LA CONFIGURACIÓN BORRANDO EL CONTENIDO DEL ARCHIVO /etc/network/interfaces
+DESPUES DE PONER EL RECEPTOR NUEVAMENTE EN MODO PUENTE Y ELIMINANDO AL EDAPTADOR SECUNDARIO
+#######################
+
+
+Jenkins Jobs = automatización de tareas
+
+como se ejecuta
+docker-compose start => iniciar
+docker-compose stop => parar
+docker-compose down => eliminar el servicio
+docker-compose up -d => crar el docker compose nuevamente
+docker-compose restar => reiniciar el servicio
+docker ps => ver los servicios disponibles
+
+####### Iniciar jenkins para acceder de manera remota desde http://192.168.1.68:8080/
+
+cd jenkins
+docker-compose start
+ingresar a http://192.168.1.68:8080/
+
+podemos usar el "docker-compose start" para iniciarlo como tambien "docker-compose up -d"
+
+docker-compose log -f => verificar las acciones 
+
+una vez logueado con admin-admin podremos ir a tareas y crear una nueva
+
+docker exec -ti jenkins bash => ingresar al contenedor
+- para probar que funcione enviar este comando
+echo "Bienvenido al curso de Jenkins"
+
+En este ejemplo vamos a relizar una tajea en jenkis conde ejecutar tenga la accion de powershel
+donde en el editor que aparece podremos colocar el mismo codigo de hoy por consola, pero este sera ejecutado desde la tarea de manera automatica segun sea configurado
+
+una vez guardado podemos ejecutarlo ingresando en el main al job y presionando el boton construir ahora que nos dan un #1 en la parte inferior izquierda mostando el detalle de la ejecución del comando
+
+Nuevo comando shell
+date +"%T" => 02:06:35
+
+AHORA=$(date +"%r")
+echo "La hora actual es $AHORA" > /temp/ahora (redirigir el output a la carpeta elegida)
+##################
+como nos salto un error de que la carpeta no existe la intentamos crear una carpeta de esta menera y no funciono
+mkdir -p "$HOME/jenkins/temp/ahora"
+mkdir -p "$HOME/jenkins/jenkins_home/temp/ahora"
+##################
+SOLUCION temp => tmp
+AHORA=$(date +"%r")
+echo "La hora actual es $AHORA" > /tmp/ahora
+
+cat /tmp/ahora => nos permite visualizar el log guardado anteriormente
+
+//! nuevo comando
+
+#!/bin/bash
+nombre="Braian"
+#Empezar el loop
+for a in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+do
+	#if es igual a 8 que el loop descanse
+	if [ $a == 8 ]
+	then
+		sleep 15
+		echo "A descansar de clase $nombre"
+	fi
+	echo "Clase N° $a"
+done
+
+/////////////////// consola
+Started by user admin
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/Primer job del curso
+[Primer job del curso] $ /bin/bash /tmp/jenkins5880683296735323634.sh
+Clase N° 1
+Clase N° 2
+Clase N° 3
+Clase N° 4
+Clase N° 5
+Clase N° 6
+Clase N° 7
+A descansar de clase Braian
+Clase N° 8
+Clase N° 9
+Clase N° 10
+Clase N° 11
+Clase N° 12
+Clase N° 13
+Clase N° 14
+Clase N° 15
+Finished: SUCCESS
+///////////////////
