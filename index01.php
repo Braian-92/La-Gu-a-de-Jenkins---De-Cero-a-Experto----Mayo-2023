@@ -443,3 +443,82 @@ nombre=$1
 curso=$2
 ############## 
 sino que tenemos que eliminar directamente las variables del script, y ahora cuando ejecutemos el script nos va a pedir los parametros
+
+##############
+configurar un mail para notificaciónes en jenkins
+
+Servidor de correo saliente (SMTP) => smtp.gmail.com
+contraseña de el mail => poner la clave generado en 2 pasos de la seguridad de gmail
+Puerto de SMTP => 465
+
+Guardando conf
+agregar credencial donde usuario es nuestro gmail y la contraseña es la generada para apps de 2 pasos y darle add
+en donde dice credentials seleccionar la creada
+
+use ssl = true
+
+#Default Triggers
+* failure
+* before build
+* success
+
+para aplicar mensajes de log de errores ir a las tareas generadas y aplicar en acciones enviar mail y habilitar que se envie cuando encuentre errores
+
+#######################
+
+integración de github con maven
+
+ya que el paquete basico viene con el plugin de github instalaremos el maven integration 
+una vez que finalice la instalación tendremos que reiniciar el docker "docker-compore stop y luego start"
+
+nuevamente abrir el jenkins desde el navegador y agregar un instalador de maven con el nombre mavenjenkins y poner guardar
+
+vamos a crear una nueva tarea de estilo libre
+y en configuración de codigo fuente eligiremos githubn y pegaremos el siguiente repositorio de prueba
+
+https://github.com/macloujulian/simple-java-maven-app.git
+
+cuando ejecutemos la tarea nos dara el directorio donde se creo el repositorio
+"/var/jenkins_home/workspace/Java app con maven"
+ para visualizar el contenido del repo ingresaremos el siguiente codigo
+
+docker exec -ti jenkins bash
+cd "/var/jenkins_home/workspace/Java app con maven"
+ls 
+
+//////////// SALIDA /////////
+DSL         Dockerfile2   Jenkinsfile3  README.md  pom.xml
+Dockerfile  Jenkinsfile1  Jenkinsfile4  jenkins    src
+/////////////////////////////
+
+
+############# BUILD DE LA APP ##############
+
+editar la tarea creada y en Build Steps seleccionar  => Ejecutar tareas 'maven' de nivel superior
+Version de Maven => mavenjenkins
+Goles => -B -DskipTests clean package
+
+###### DETALLE ########
+-DskipTests omita las pruebas 
+clean package genera la aplicación java
+######################
+
+en ejecutar despues de finalizar enviar un mail con la integración de smtp de gmail
+
+al ejecutar la tarea nos sale todo el proceso y el destino del archivo jar generado
+
+Building jar: "/var/jenkins_home/workspace/Java app con maven/target/my-app-1.0-SNAPSHOT.jar"
+
+para verificar el directorio primero ingresar al espacio de jenkins
+
+docker exec -ti jenkins bash
+
+//! y luego entrar al directorio del archivo generado
+cd "/var/jenkins_home/workspace/Java app con maven/target/"
+ls
+
+//////// SALIDA ///////////////
+classes                 maven-archiver           test-classes
+generated-sources       maven-status
+generated-test-sources  my-app-1.0-SNAPSHOT.jar
+//////////////
