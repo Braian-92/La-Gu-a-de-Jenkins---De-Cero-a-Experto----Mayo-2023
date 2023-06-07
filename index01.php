@@ -572,3 +572,72 @@ y en avanzado checkeamos el "Archive artifacts only if build is successful" para
 MAIL #####
 Jenkins build is back to normal : Java app con maven #10
 ########
+
+
+###################################################################
+
+Que son los dockerfiles => son archivos con configuración de formato imagen que permite inicializar un ambiente configurado con las dependencias necesarias
+
+#############################################
+
+Instalación de docket en el contenedor de jenkins
+cd jenkins 
+git clone https://github.com/macloujulian/dockerjenkins.git (contiene un dockerfile)
+cd dockerjenkins
+cat Dockerfile (visualizar contenido del archivo "Dockerfile")
+cd .. (retroceder)
+vi docker-compose.yml
+
+////////// CONTENIDO ACTUAL /////////////////
+version: '3'
+services:
+  jenkins:
+    image: jenkins/jenkins
+    ports:
+      - 8080:8080
+      - 50000:50000
+    container_name: jenkins
+    volumes:
+      - $PWD/jenkins_home:/var/jenkins_home
+    networks:
+      - net
+networks:
+  net:
+////////// CONTENIDO NUEVO /////////////////
+version: '3'
+services:
+  jenkins:
+    image: jenkins/docker
+    build:
+      context: dockerjenkins
+    ports:
+      - 8080:8080
+      - 50000:50000
+    container_name: jenkins
+    volumes:
+      - $PWD/jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock (permite ingresar por fuera del contenedor)
+    networks:
+      - net
+networks:
+  net:
+//////////////////////////////////////////////////
+apretar esc y :wq! para guardar
+cat docker-compose.yml (visualizar el contenido)
+docker-compose stop
+docker-compose build (compila el nuevo yml)
+docker images | grep docker (para visualizar la imagen de docker)
+// SALIDA //
+jenkins/docker    latest    cc6935239530   About a minute ago   1.05GB
+//////////
+
+docker-compose up -d (para recrear el contenedor de jenkins)
+docker ps (verifica recreación )
+docker exec -ti jenkins bash (ingresar al contenedor)
+docker ps (nos saldra permiso denegado)
+exit (salimos del contenedor)
+docker exec -ti --user root jenkins bash (ingresar con permisos root)
+chown jenkins /var/run/docker.sock (asignar permisos de ejecución)
+exit
+docker exec -ti jenkins bash
+docker ps (ya podemos ver los contenedores de docker en el contenedor de jenkins, podemos ejecutar cualquier comando de docker desde el contenedor jenkins) (resumen instalamos docker en docker)
