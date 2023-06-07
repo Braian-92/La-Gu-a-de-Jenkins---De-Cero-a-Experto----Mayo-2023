@@ -522,3 +522,53 @@ classes                 maven-archiver           test-classes
 generated-sources       maven-status
 generated-test-sources  my-app-1.0-SNAPSHOT.jar
 //////////////
+
+############## TEST ############
+
+ir a la tarea nuevamenet editarla y agregar en ejecutar una tarea de maven con:
+
+Version de Maven => mavenjenkins
+Goles => test
+
+// CONSOLA //
+[INFO] Running com.mycompany.app.AppTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.056 s
+/////////////
+
+para ingresar el en reporte del testeo ingresar a este directorio despues de prender y entrar en docker de jenkins
+cd "/var/jenkins_home/workspace/Java app con maven/target/surefire-reports/"
+
+para visualizar los reportes xml de test editar la tarea y en acciones despues del mail agregar
+
+Publicar los resultados de tests JUnit
+Ficheros XML con los informes de tests => target/surefire-reports/*.xml
+
+y ahora en la tarea se puede visualizar el nuevo reporte "Últimos resultados de tests" como el grafico a la derecha
+
+
+########## EJECUTAR LA APLICACIÓN JAR ########
+editamos la tarea y agregamos la accion de powershel con el siguiente comando
+
+echo "Entrega: Desplegando la aplicación"
+java -jar "/var/jenkins_home/workspace/Java app con maven/target/my-app-1.0-SNAPSHOT.jar"
+
+// CONSOLA //
+Hello World!
+/////////////
+
+con esto finalizamos un ciclo sensillo de CI/CD (integración continua y entrega continua)
+
+
+##### Para finalizar vamos a guardar los archivos correctos .jar #############
+
+editar la tarea y agregar una nueva sentencia en acciones de tipo "guardar archivos generados"
+
+Ficheros para guardar => target/*.jar
+
+y en avanzado checkeamos el "Archive artifacts only if build is successful" para que solo guarde las compilaciones correctas
+
+(como nos olvidamos configurar el directorio de fichero para guardar nos envio el detalle del error en el mail y luego cuando lo reparamos nos envio este mail)
+
+MAIL #####
+Jenkins build is back to normal : Java app con maven #10
+########
