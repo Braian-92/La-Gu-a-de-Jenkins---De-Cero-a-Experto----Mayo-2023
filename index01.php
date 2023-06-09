@@ -863,3 +863,11 @@ job('ejemplo-job-DSL') {
   	mailer('zamudiobraianhernan@gmail.com', true, true)
   }
 }
+
+
+######## QUITAR RESTRICCION POR COMANDOS DSL ############
+Aclaración: esto no venia en el curso pero aceleraria las practicas sin tener que andar validando los script en la configuración de seguridad
+https://issues.jenkins.io/browse/JENKINS-32681?page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel&showAll=true
+https://plugins.jenkins.io/permissive-script-security/
+instalar plugin => permissive-script-security.
+########################################################
