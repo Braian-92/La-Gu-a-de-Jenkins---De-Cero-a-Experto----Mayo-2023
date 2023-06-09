@@ -871,3 +871,15 @@ https://issues.jenkins.io/browse/JENKINS-32681?page=com.atlassian.jira.plugin.sy
 https://plugins.jenkins.io/permissive-script-security/
 instalar plugin => permissive-script-security.
 ########################################################
+
+
+####### Parametrizado en repo propio #######
+crear una nueva tarea y en origen de fuente colocamos el siguiente repositorio que contien el .groovy
+https://github.com/Braian-92/La-Gu-a-de-Jenkins---De-Cero-a-Experto----Mayo-2023.git
+
+Branches to build
+--> Branch Specifier (blank for 'any') => */main (colocar rama)
+
+Process Job DSLs => Look on Filesystem => ./github01/parametrizadoDSL.groovy
+
+######### Trigger automatico con github #############
