@@ -641,3 +641,74 @@ chown jenkins /var/run/docker.sock (asignar permisos de ejecución)
 exit
 docker exec -ti jenkins bash
 docker ps (ya podemos ver los contenedores de docker en el contenedor de jenkins, podemos ejecutar cualquier comando de docker desde el contenedor jenkins) (resumen instalamos docker en docker)
+
+
+################ NodeJS ####################
+
+instalar el plugin de nodejs en jenkins
+
+crear una tarea llamada Aplicación nodeJS
+
+y que el origen sea de GIT
+con el siguiente link https://github.com/macloujulian/nodejsapp.git
+
+y en ejecutar (Build Steps) colocamos un nuevo comando de shell con el siguiente comando
+npm install
+y habilitamos en la parte superior "Provide Node & npm bin/ folder to PATH" 
+
+estando en el root de la consola ingresamos el siguiente comando
+
+docker exec -ti jenkins bash
+cd /var/jenkins_home/workspace
+ls
+
+y veremos que aparece "Aplicación nodeJS"
+
+cd "Aplicación nodeJS"
+ls
+cd node_modules
+ls
+
+y visualizaremos todas las dependencias
+
+ahora instalaremos el plugin "CloudBees Docker Build and Publish plugin"
+
+y reabriendo la tarea ingresaremos una nueva ejecucuión (build steps) de "Docker Build and Publish" 
+
+primero antes de llenar los campos ir al sitio
+https://hub.docker.com/
+y crear un nuevo repositorio
+
+nombre => nodejsapp
+desc => App nodejs hello word para jebnkins
+
+una vez creado utilizar el directorio que nos da para colocarlo en el repositorio name de build and publish
+Repository Name => braianzamudio/nodejsapp
+Tag => App1
+y en Registry credentials agregar las de docker hub
+
+en nuestro caso para que tome las credenciales hay que reiniciar el servidor completamente
+finalmente guardar
+
+######### loguear docker hub en consola para que pueda vincular jenkins con nuestro repositorio de docker hub #####
+
+docker login (inicio) y nos pedira usuario y contraseña
+
+al final el ingreso se realizaba por un tocken generado en el sitio
+https://forums.docker.com/t/error-response-from-daemon-get-https-registry-1-docker-io-v2-unauthorized-incorrect-username-or-password/130981/2
+
+docker login -u tockenUser
+ti9ohjasojdas tockern
+
+no compila 
+infica que para bajar la imagen seria
+docker pull braianzamudio/nodejsapp
+
+para crerlo
+docker run -p 3000:3000 -d --name nodejsapp braianzamudio/nodejsapp
+
+y ejecutarlo 
+curl localhost:3000
+// salida si funcionara : hello world! Gola Mundo!
+
+y en el navegador seria http://192.168.1.42:3000
