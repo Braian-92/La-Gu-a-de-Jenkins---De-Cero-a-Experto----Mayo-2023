@@ -712,3 +712,60 @@ curl localhost:3000
 // salida si funcionara : hello world! Gola Mundo!
 
 y en el navegador seria http://192.168.1.42:3000
+
+
+########## seguridad jenkins ###########
+
+Jenkins desde configuración permite habilitar el creado de cuentas ademas se puede realizar desde consola
+
+en este caso vamos a utilizar el siguiente plugin "Role-based Authorization Strategy"
+
+para activarlo : "Panel de Control => Administrar Jenkins => Security"
+
+Autorización => Role based Strategy
+
+y ahora veremos la siguiente categoria en seguridad => "Manage and Assign Roles"
+y en este podremos configurar grupos para configuraciones generales para usuarios
+
+########## infraestructura como código #############
+
+control de versión CSM
+
+Introducción a DSL (domain specific lenguage)
+
+instalar el plugin Job DSl
+
+primera etapa crear los "seed jobs"
+
+creamos una nueva tareas DSL Job
+
+y vamos directamente a ejecutar y seleccionamos "Process Job DSLs"
+////// DOCU: https://jenkinsci.github.io/job-dsl-plugin/#
+
+
+check => Use the provided DSL script
+y colocamos el siguiente comando
+
+job('ejemplo-job-DSL') {
+
+}
+
+guardarlo y activarlo en configuraciones en la sección "In-process Script Approval" docu (https://www.youtube.com/watch?v=tCqWYgZmJtg)
+
+
+job('ejemplo-job-DSL') {
+	description('Job DSL de ejemplo para curso de jenkins')
+}
+
+############ Source Control Management SCM ##########
+
+
+job('ejemplo-job-DSL') {
+  description('Job DSL de ejemplo para el curso de Jenkins')
+  scm {
+    git('https://github.com/macloujulian/jenkins.job.parametrizado.git', 'main') { node ->
+      node / gitConfigName('macloujulian')
+      node / gitConfigEmail('macloujulian@gmail.com')
+    }
+  }
+}
