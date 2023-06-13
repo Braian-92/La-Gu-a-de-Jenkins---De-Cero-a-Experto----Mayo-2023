@@ -1312,3 +1312,113 @@ pipeline {
 
 ahora nos tendremos que posicionar en el reporte para setear los valores y no
 permitira avanzar la ejecución hasta que lo realicemos
+OPCIONAL (podriamos ponerle un timeout por si nadie ingresa valores y poner un default)
+
+######### PIPELINE CRON ##########
+
+######
+pipeline {
+    agent any
+    triggers {
+        cron('H/2 * * * *')
+    }
+    stages {
+        stage('Example') {
+            steps {
+                echo 'Hello World'
+            }
+        }
+    }
+}
+######
+Esto se ejecutara solo cada 2 minutos despues de realizar la primera construcción
+1ro = #1513 jun. 2023 2:33 ART
+2do = #1613 jun. 2023 2:34 ART
+3ro = #1713 jun. 2023 2:36 ART
+4to = #1813 jun. 2023 2:38 ART
+
+##### POST ACTIONS ######
+
+son procesos que se ejecutan despues de terminar la tarea basica principal
+se podria utilizar para comunicar el estado de la tarea enviando un mail por ejemplo
+
+#####
+pipeline {
+	agent any
+	stages {
+		stage('Example') {
+			steps {
+				sh 'hola'
+			}
+		}
+	}
+	post { 
+		failure { 
+			echo 'Esta ejecución ha fallado'
+		}
+	}
+}
+#####
+
+cuando falla la ejecución imprime 'Esta ejecución ha fallado'
+
+
+
+######################################################################
+######################################################################
+######################################################################
+## NodeJS docker pepeline #######
+
+esto nos permite crear entornos aislados instalar las dependencias y realizar acciones 
+con dependencias especificas sobre los diferentes stages
+
+###### instalar docker pipeline en plugins
+
+
+crear nueva tarea "NodeJS pipeline" (de tipo pipeline)
+
+esta vez vamos a utilizar en Definition de "Pipeline script" a "Pipeline script from SCM"
+
+SCM => git => https://github.com/macloujulian/nodejspipeline.git
+
+Branch Specifier (blank for 'any') => */main
+
+Script Path => "jenkinsfile" (nombre del archivo del repositorio)
+
+## GUARDAR ##
+
+//////// SALIDA /////////
+ERROR: Could not find credentials matching docker-hub
+Finished: FAILURE
+////////////// en nuestro caso nos da error por que no tenemos bien colocadas las
+credenciales del docker-hub (si otro ejersicio lo presisa retrocederemos para que funcione
+o buscaremos documentación externa al curso)
+
+####### Segundo ejercicio ##########
+
+creamos una nueva tarea de pipeline llamada "Nodejs Pipeline 2" de tipo SCM
+GIT => https://github.com/macloujulian/nodejspipeline.git
+=> main
+"jenkinsfile2" (es el mismo repo y otro archivo)
+
+// SALIDA //
+WARNING: Support for the legacy ~/.dockercfg configuration file and file-format has been removed and the configuration file will be ignored
+permission denied while trying to connect to the Docker daemon socket 
+at unix:///var/run/docker.sock: 
+Post "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/images/create?fromImage=node&tag=4.6": 
+dial unix /var/run/docker.sock: connect: permission denied
+
+// solucionado con "sudo chmod 666 /var/run/docker.sock"
+
+tome la referencia de este sitio pero tenia los codigos aca
+https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue
+
+al ejecutarlo nuevamente me da el error de 
+
+ERROR: Could not find credentials matching docker-hub
+Finished: FAILURE
+
+########### FIXEO #######
+verificar instalación del plugin "CloudBees Docker Build and Publish plugin"
+
+en el capitulo 09 video 50 (retroceder)
