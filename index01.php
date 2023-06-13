@@ -883,3 +883,183 @@ Branches to build
 Process Job DSLs => Look on Filesystem => ./github01/parametrizadoDSL.groovy
 
 ######### Trigger automatico con github #############
+
+es necesario generar un webhook y tener una ip accesible desde internet
+en github se da el enlace al ip del jenkins que hace resonar el trigger
+
+############# Ejemplo compilar app java con groovy ############
+
+job('Java Maven App DSL 2') {
+    description('Java Maven App con DSL para el curso de Jenkins')
+    scm {
+        git('https://github.com/macloujulian/simple-java-maven-app.git', 'master') { node ->
+            node / gitConfigName('macloujulian')
+            node / gitConfigEmail('macloujulian@gmail.com')
+        }
+    }
+    steps {
+        maven {
+          mavenInstallation('mavenjenkins')
+          goals('-B -DskipTests clean package')
+        }
+        maven {
+          mavenInstallation('mavenjenkins')
+          goals('test')
+        }
+        shell('''
+          echo "Entrega: Desplegando la aplicación" 
+          java -jar "/var/jenkins_home/workspace/Java Maven App DSL 2/target/my-app-1.0-SNAPSHOT.jar"
+        ''')  
+    }
+    publishers {
+        archiveArtifacts('target/*.jar')
+        archiveJunit('target/surefire-reports/*.xml')
+		slackNotifier { -- en nuestro caso no usamos slark sino que usamos el simple mail
+        notifyAborted(true)
+        notifyEveryFailure(true)
+        notifyNotBuilt(false)
+        notifyUnstable(false)
+        notifyBackToNormal(true)
+        notifySuccess(true)
+        notifyRepeatedFailure(false)
+        startNotification(false)
+        includeTestSummary(false)
+        includeCustomMessage(false)
+        customMessage(null)
+        sendAs(null)
+        commitInfoChoice('NONE')
+        teamDomain(null)
+        authToken(null)
+      }
+    }
+}
+
+#### Quitar seguridad de los scripts #######
+#### Quitar seguridad de los scripts #######
+#### Quitar seguridad de los scripts #######
+
+configuración => seguridad y destildar (Enable script security for Job DSL scripts) #########
+
+
+##### BUSQUEDA EN LINUX => (find ~ -name 'npm')
+
+####### REPASO CD/CD ##############
+
+01 - CÓDIGO (Proyecto) =>
+02 - Integración Continua (commit/contrucción/testeos) =>
+03 - Distribución continua (deploy/testing/Env/testeos) =>
+04 - Implementación continua (deploy producción Env)
+
+##############################
+####### Jenkins pipeline (jenkinsfile) #####
+=> nos da la capacidad de escribir los los build steep en forma de codigo
+
+BUILD => TEST => DEPLOY
+
+realizar primer proyecto
+
+# verificar tener instalado el plugin pipeline
+# crear tarea "Primer pipeline" de tipo pipeline (en vez de estilo libre)
+
+en Pipeline => definition colocar :
+
+#####
+pipeline {
+    agent any 
+    stages {
+        stage('Build') { 
+            steps {
+                echo 'Construyendo la Aplicación' 
+            }
+        }
+        stage('Test') { 
+            steps {
+                echo 'Arranca el proceso de pruebas unitarias' 
+            }
+        }
+        stage('Deploy') { 
+            steps {
+                echo 'Desplegando al área de desarrollo' 
+            }
+        }
+    }
+}
+#####
+
+cuando damos ejecutar a la tarea con este metodo obtendremos un 
+reporte con cada agente y un detalle de la ejecución de cada uno
+
+####### multiples pasos en un stage ########
+
+
+#####
+pipeline {
+    agent any 
+    stages {
+        stage('Build') { 
+            steps {
+                sh ' echo "Construyendo la Aplicación"'
+                sh '''
+                	echo 'pasos multiples en shell tambien funcionan'
+                	pwd
+                '''
+            }
+        }
+        stage('Test') { 
+            steps {
+                echo 'Arranca el proceso de pruebas unitarias' 
+            }
+        }
+        stage('Deploy') { 
+            steps {
+                echo 'Desplegando al área de desarrollo' 
+            }
+        }
+    }
+}
+#####
+
+DOCU PIPELINE => https://www.jenkins.io/doc/book/pipeline/syntax/
+
+###########################################
+##### Etapas paralelas vs secuenciales #####
+
+modificar la tarea y colocar el siguiente comando que aplica el nuevo formato paralelo y secuencial
+###
+pipeline {
+    agent any
+    stages {
+        stage('Secuencial') {
+            stages {
+                stage('Secuencial 1') {
+                    steps {
+                        echo "Secuencial: Parte 1"
+                    }
+                }
+                stage('Secuencial 2') {
+                    steps {
+                        echo "Secuencial: Parte 2"
+                    }
+                }
+                stage('Paralelo dentro de secuencial') {
+                    parallel {
+                        stage('Paralelo 1') {
+                            steps {
+                                echo "Paralelo en secuencial: Parte 1"
+                            }
+                        }
+                        stage('Paralelo 2') {
+                            steps {
+                                echo "Paralelo en secuencial: Parte 2"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+###
+
+como el formato de la secuencia cambia el reporte se limpia y arranca de 0 con el nuevo formato
+contando las diferencias a partir del formato actual
