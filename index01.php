@@ -1063,3 +1063,252 @@ pipeline {
 
 como el formato de la secuencia cambia el reporte se limpia y arranca de 0 con el nuevo formato
 contando las diferencias a partir del formato actual
+
+
+########## rety / timeout / sleep #######
+pipeline {
+    agent any
+    stages {
+        stage('Deploy') {
+            steps {
+                retry(3) {
+                    sh 'echo "Arranca el deploy"'
+                }
+
+                timeout(time: 10, unit: 'SECONDS') {
+                    sh 'sleep 15'
+                }
+            }
+        }
+    }
+}
+como le colocamos un sleep de de 15 segundos y decidimos darle un limite de ejecución
+de 10 este para automaticamente dejando la alerta gris
+(en vez de las rojas y verdes en el listado de ejecuciones)
+
+/////////// CONSOLA //////////////////////////
+Started by user admin
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/Primer pipeline
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Deploy)
+[Pipeline] retry
+[Pipeline] {
+[Pipeline] sh
++ echo Arranca el deploy
+Arranca el deploy
+[Pipeline] }
+[Pipeline] // retry
+[Pipeline] timeout
+Timeout set to expire in 10 sec
+[Pipeline] {
+[Pipeline] sh
++ sleep 15
+Cancelling nested steps due to timeout
+Sending interrupt signal to process
+Terminated
+script returned exit code 143
+[Pipeline] }
+[Pipeline] // timeout
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+Timeout has been exceeded
+org.jenkinsci.plugins.workflow.actions.ErrorAction$ErrorId: 747ea912-ddab-47c0-ac0d-9ddc22a73e54
+Finished: ABORTED
+///////////////////////////////////////////////
+
+##################### retry #############
+
+pipeline {
+    agent any
+    stages {
+        stage('Deploy') {
+            steps {
+                timeout(time: 5, unit: 'SECONDS') {
+                    retry(3) {
+                        sh 'hola'
+                    }
+                }
+            }
+        }
+    }
+}
+##############
+
+cuando falla este se ejecuta 3 veces
+
+###########
+pipeline {
+    agent any
+    stages {
+        stage('Deploy') {
+            steps {
+                timeout(time: 5, unit: 'SECONDS') {
+                    retry(3) {
+                        sh 'sleep 6'
+                    }
+                }
+            }
+        }
+    }
+}
+###########
+
+en este caso no fallo pero se cancelo ya que tenia una espera de 6 segundos y el timeout 
+limite era de 5 para el proceso, entonces se corto automaticamente
+
+###### OPTIONS ###########
+
+pipeline {
+  agent any
+  stages {
+    stage('Secuencial') {
+      options {
+        timeout(time: 15, unit: 'SECONDS')
+			}
+			stages {
+				stage('Secuencial 1') {
+					steps {
+						echo "Secuencial: Parte 1"
+					}
+				}
+				stage('Secuencial 2') {
+					steps {
+						sh 'sleep 16'
+					}
+				}
+			}
+		}
+	}
+}
+
+############ 
+en este ejemplo utilizamos options para delimitar el timeout general del secuencial como limitador total
+-- en este caso fallo ya que el secualcial 2 supera el limite general
+
+######### environment variables / credentials ########
+variables de entorno y credenciales
+
+DOCU: https://www.jenkins.io/doc/book/pipeline/syntax/#environment
+
+se puede utilizar tanto en el pilepine general como en un stage solamente
+
+#### CREAR CREDENCIALES ####
+
+configuración => credentials => global (aparece un desplegable para agregar)
+
+(metodo usuario y contraseña)
+usuario = qwerty
+contraseña = 1234
+ID = USUARIO1
+## CREATE ##
+
+(metodo secret text)
+secret = 123456789
+ID = USUARIO50
+## CREATE ##
+
+#####
+pipeline {
+    agent any
+    stages {
+        stage('Ejemplo Username/Password') {
+            environment {
+                CRED_USUARIO = credentials('USUARIO1')
+            }
+            steps {
+                sh 'echo "El usuario es $CRED_USUARIO_USR"'
+                sh 'echo "La contraseña es $CRED_USUARIO_PSW"'
+            }
+        }
+    }
+}
+#####
+
+#####
+pipeline {
+    agent any
+    environment { 
+        SECRET_TEXT = credentials('USUARIO50')
+    }
+    stages {
+        stage('Ejemplo para Secret Text') {
+            steps {
+                sh 'echo $SECRET_TEXT'
+            }
+        }
+    }
+}
+#####
+
+de esta manera podremos utilizar las credenciales alojadas en los pipelines
+
+######### PARAMETERS/INPUT ##########
+
+DOCU: https://www.jenkins.io/doc/book/pipeline/syntax/
+
+####
+pipeline {
+    agent any
+    parameters {
+        string(name: 'PERSONA', defaultValue: 'Julian', description: 'A quien debo saludar?')
+
+        booleanParam(name: 'FLAG', defaultValue: true, description: 'FLAG Verdadera?')
+
+        choice(name: 'Eleccion', choices: ['A', 'B', 'C'], description: 'Elegir una opción')
+    }
+    stages {
+        stage('Clase de Parametros') {
+            steps {
+                echo "Hola, como estas ${params.PERSONA}"
+
+                echo "FLAG: ${params.FLAG}"
+
+                echo "Eleccion: ${params.Eleccion}"
+            }
+        }
+    }
+}
+
+####
+
+cuando lo ejecutemos por segunda vez nos permitira elegir los parametros (Build with Parameters)
+(en la primera ejecución utilizara los default)
+
+
+### IMPORTANTE , cuando coloquemos este parametro tenemos que quitar lo parametrizado
+ ya que queda del codigo anterior seteado en la tarea
+####
+pipeline {
+  agent any
+  stages {
+    stage('Etapa 1') { 
+      steps {
+        echo "Arranca la Etapa 1" 
+ 
+        sh 'sleep 10'
+      }
+    }
+    stage('Etapa 2') {
+      input {
+        message "Continuar el proyecto?"
+        ok "Si, continuar por favor."
+        parameters {
+            string(name: 'PERSONA', defaultValue: 'Julian', description: 'A quien debo saludar?')
+        }
+      }
+      steps {
+        echo "Hola, ${PERSONA}, un placer conocerte."
+      }
+    }
+  }
+}
+####
+
+ahora nos tendremos que posicionar en el reporte para setear los valores y no
+permitira avanzar la ejecución hasta que lo realicemos
