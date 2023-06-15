@@ -1422,3 +1422,10 @@ Finished: FAILURE
 verificar instalación del plugin "CloudBees Docker Build and Publish plugin"
 
 en el capitulo 09 video 50 (retroceder)
+
+######## pasamos al proyecto de Aplicaciónn nodeJS
+nos aparecia un error de la versión como warning en la consola entonces 
+cambiamos a la version mas proxima de 14.8.0 mencionada en el log y compilo,
+pero sigue sin publicar el commit un hub docker
+
+al colocar docker login ingresa automaticamente y no solicita credenciales actualmente en consola
