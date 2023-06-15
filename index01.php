@@ -1691,6 +1691,7 @@ Def "artifact" resultado binario de una compilación (docker, jar, zip, )
 
 permite guardar los compilados y generar un historico para poder volver en el tiempo
  registrarse en https://jfrog.com/ 
+ instalar plugin "Artifactory"
 
 en usuario => setup => Gradle (para crear un repo) dejar en default y crear y cerrar
 
@@ -1702,4 +1703,75 @@ configuración => identity and access => groups => new group , name deploy => sa
 menu => users => new user, name deploy
 ir a un listado de grupos de abajo y mover deploy de available a included y sacar el de readers
 
- instalar plugin "Artifactory"
+subir un poco y setear la contraseña y poner un mail y save
+
+menu => permisos => new , "deploy" => en la parte inferior seleccionar los repos, seleccionar los de gradle y pasarlos a la derecha
+y mover en groups tambien despues de finalizar los permisos
+en groups activar deploy and cache => create
+poner editar en enm permisos dejar any
+con esto se activa el buid y seleccionar todo y lo mismo enm groups
+
+en jenkins ir a configuración => settings => jfrog => use credentials plugin [x], agregar credenciales, 
+user deploy y contraseña generar desde la web una password api
+
+id y desc como "artifactory" => add
+
+instance id => link de ifrag usuario propio despues del .com/
+
+y en el segundo incluir el link con el hpps => test conection => guardar
+
+Info: dice que java y gravel no usa docker
+
+en configuración => poner un nombre en gradle como hicimos con node (solo poner un nombre) => save (poner v6.7)
+
+nueva tarea => "testeo de gradle" => pipeline => origen SCM =>
+git => https://github.com/macloujulian/cursojenkins.git => main => jfrog-artifactory/Jenkinsfile => save
+
+
+############
+
+node {
+  def server = Artifactory.server('cursojenkinsmac.jfrog.io')
+  def rtGradle = Artifactory.newGradleBuild()
+  def buildInfo = Artifactory.newBuildInfo()
+  
+  stage 'Complicacion/Build'
+      git branch: 'main', url: 'https://github.com/macloujulian/gs-gradle.git'
+
+  stage 'Configuracion Artifactory'
+      rtGradle.tool = 'gradle' // Como le asignamos al nombre de la herramienta en Jenkins en configuración
+      rtGradle.deployer repo:'default-gradle-dev-local',  server: server
+      rtGradle.resolver repo:'default-gradle-dev', server: server
+
+      stage('Configuracion buildInfo') {
+          buildInfo.env.capture = true
+          buildInfo.env.filter.addInclude("*")
+      }
+
+      stage('Configuraciones extra de gradle') {
+          rtGradle.usesPlugin = true // El plugin ya está definifo en el build script
+      }
+      stage('Ejecutar Gradle') {
+          rtGradle.run rootDir: "artifactory/", tasks: 'clean artifactoryPublish', buildInfo: buildInfo
+      }
+      stage('Publicar buildInfo') {
+          server.publishBuildInfo buildInfo
+      }
+}
+
+#########
+
+ejecutar tarea
+
+############## LLAMAR A API POR HTTP BITBUCKET ###########
+
+instalar plugin 'HTTP Request'
+
+entrar al workspace de bitbucket => settings => OAuth consumers => add consumer, nombre "jenkins", 
+callback url =>  pagina y puerto del jenkins "http://192.168.1.38:8080/" = URL
+checkear pull request y repo (repo es auto) => save => copiar la clave
+
+en jenkins en manage credentials => agregar una global (poner usuario hash y clave secreta de bitbucket)
+id = bitbucket-oauth igual que en descripcion (esto nos da un link con la docu)
+
+
