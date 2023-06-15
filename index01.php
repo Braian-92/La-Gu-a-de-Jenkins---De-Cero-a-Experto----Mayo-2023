@@ -1429,3 +1429,277 @@ cambiamos a la version mas proxima de 14.8.0 mencionada en el log y compilo,
 pero sigue sin publicar el commit un hub docker
 
 al colocar docker login ingresa automaticamente y no solicita credenciales actualmente en consola
+
+########## Pipeline app Java maven ##############
+
+crear nueva tarea => pipeline mave de tipo pipeline , desc => Java maven app
+pipiline script from SCM => git => https://github.com/macloujulian/simple-java-maven-app.git
+=> master, script => Jenkinsfile1
+el pipeline que vendra del repo sera:
+
+##################
+pipeline {
+    agent any
+    
+    tools {
+        maven 'mavenjenkins'
+    }
+    
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn -B -DskipTests clean package'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh './jenkins/scripts/deliver.sh'
+            }
+        }
+    }
+}
+##################
+
+Ejemplo fuera del contenedor
+
+cambiar la ruta de la tarea anterior a "jenkins/Jenkinsfile"
+la cual contiene el siguiente pipeline
+
+########
+pipeline {
+    agent {
+        docker {
+            image 'maven:3-alpine'
+            args '-v /root/.m2:/root/.m2'
+        }
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn -B -DskipTests clean package'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Deliver') {
+            steps {
+                sh './jenkins/scripts/deliver.sh'
+            }
+        }
+    }
+}
+########
+
+al final de esto el contenedor se para y se elimina
+
+########## maven app al docker hub #####
+
+cambiar el directorio por "Jenkinsfile3"
+
+pipeline {
+    agent any
+    environment {
+        gitcommit = "${gitcommit}"
+    }
+    tools {
+        maven 'mavenjenkins'
+    }
+
+    stages {
+
+        stage('Verificación SCM') {
+          steps {
+            script {
+              checkout scm
+              sh "git rev-parse --short HEAD > .git/commit-id"  
+              gitcommit = readFile('.git/commit-id').trim()
+            }
+          }  
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn -B -DskipTests clean package'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Docker Build & Push') {
+          steps {
+            script {  
+              docker.withRegistry('https://registry.hub.docker.com', 'docker-hub') {
+                def appmavenjenkins = docker.build("macloujulian/mavenjenkins:${gitcommit}", ".")
+                appmavenjenkins.push()
+              }
+            }  
+          }  
+        }
+    }
+}
+
+vemos que en este metodo no se utiliza node sino que pepeline que es mas estricto 
+y tendremos que declarar las variables en environment
+
+DOCU DOCKER : https://docs.docker.com/engine/deprecated/#support-for-legacy-dockercfg-configuration-files
+
+##### pipeline maven coin artifact y notificaciones en slak ##
+
+cambiar el directorio por "Jenkinsfile4"
+
+pipeline {
+    agent any
+    environment {
+        gitcommit = "${gitcommit}"
+    }
+    tools {
+        maven 'mavenjenkins'
+    }
+
+    stages {
+
+        stage('Verificación SCM') {
+          steps {
+            script {
+              checkout scm
+              sh "git rev-parse --short HEAD > .git/commit-id"  
+              gitcommit = readFile('.git/commit-id').trim()
+            }
+          }  
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn -B -DskipTests clean package'
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }    
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+        stage('Docker Build & Push') {
+          steps {
+            script {  
+              docker.withRegistry('https://registry.hub.docker.com', 'docker-hub') {
+                def appmavenjenkins = docker.build("macloujulian/mavenjenkins:${gitcommit}", ".")
+                appmavenjenkins.push()
+              }
+            }  
+          }  
+        }
+        stage('Deploy') {
+            steps {
+                sh './jenkins/scripts/deliver.sh'
+            }
+        }
+    }
+    post {
+        success { 
+            slackSend message: "Build Started - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+        failure {
+            slackSend message: "Build Started - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+        always {
+            slackSend message: "Build Started - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }    
+    }
+}
+
+##################### verificador de ramas creadas en github #####################################
+##################### verificador de ramas creadas en github #####################################
+
+verificar si tenemos instalado el plugin "GitHub Branch Source"
+
+nueva tarea "Mi repositorio de github"
+de tipo organization folder
+repository resources => 
+Owner => Braian-92
+
+Credentials =>
+github.com => settings => developer settings => personal access tocken => generate new
+note => jenkins
+solo colocar el acceso a repo [x]
+generate tocken =>  XXXXXXXXXXXXXXX
+
+crear un fork del siguiente repo => https://github.com/spring-guides/gs-gradle
+
+instalar dependencias
+
+cd jenkins/jenkins_home/
+mkdir gradle
+cd $HOME
+chown 1000:1000 /jenkins/jenkins_home/gradle
+
+instalar plugin "docker pipeline" 
+
+(dice que hay que asignar los permisos para acceder a jenkins dentro del contenedor como dijo antes)
+
+Create multiBranch proyects = https://www.jenkins.io/doc/book/pipeline/multibranch/
+
+
+
+##################### verificador de ramas creadas en bitbucket #####################################
+
+instalar "bitbucket branch plugin" (por las dudas instalamos el generico de bitbucket)
+
+neuva tarea "Mi repositorio de bitbucket"
+sources => bitbucket, owner (equipo) workspaces en profile debitbucket.profile.com (no es pagina sino ref) => settings 
+
+credenciales "App pasword" => create passwords, label => jenkins, permisos (todos)
+dice que bitbucket tambien permite webhooks
+
+Def "artifact" resultado binario de una compilación (docker, jar, zip, )
+
+
+################ Jfrog Artifactory #####################
+################ Jfrog Artifactory #####################
+
+permite guardar los compilados y generar un historico para poder volver en el tiempo
+ registrarse en https://jfrog.com/ 
+
+en usuario => setup => Gradle (para crear un repo) dejar en default y crear y cerrar
+
+panel => artifacts
+
+filtrar por gradle
+
+configuración => identity and access => groups => new group , name deploy => save
+menu => users => new user, name deploy
+ir a un listado de grupos de abajo y mover deploy de available a included y sacar el de readers
+
+ instalar plugin "Artifactory"
