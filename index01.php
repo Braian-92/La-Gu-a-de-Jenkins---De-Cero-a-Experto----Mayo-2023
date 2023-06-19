@@ -1775,3 +1775,70 @@ en jenkins en manage credentials => agregar una global (poner usuario hash y cla
 id = bitbucket-oauth igual que en descripcion (esto nos da un link con la docu)
 
 
+###########
+
+hostname -i (mostrar ip del servidor)
+
+
+########### BLUE OCEAN ######
+
+buscar e instalar el plugin blue ocean
+entran en la nueva sección de 
+"Open blue ocean que aparece en la solapa de configuración tareas etc"
+al crear un nuevo pipeline te da como preferencia el origen de los archivo como repositorios
+
+GIT => https://github.com/macloujulian/gs-gradle.git
+create pipeline
+
+- Detectara que la rama contiene un jenkinsfile y actuara sobre el mismo
+
+############ SSH AGENT ################
+
+utilización de credenciales con el  plugin a instalar ssh agent
+
+node {
+  stage('Etapa con Git') {  
+    sshagent (credentials: ['github-key']) {
+      // Con el siguiente comando el ultimo commit id del repositorio que se especifica
+      sh 'git ls-remote -h --refs git@github.com:macloujulian/cursojenkins.git master |awk "{print $1}"'
+    }
+  }
+}
+
+
+
+########### PIPELINE MULTIBRANCH ###############
+
+crear una tarea "multibranch sample app"
+de tipo Multibranch pipeline
+brach sources >  GIT =>
+proyect repository = "https://github.com/CursoJenkins0/multibranch-sample-app"
+
+si no tenemos enlazado por un webhook podriamos realizar 
+un sistema de cron que revise el estado periodicamente
+###  opcional ##
+configuración => Periodically if not otherwise run => 1 hour
+###  opcional ##
+
+si lo ejecutamos va a verificar si contiene un jenkinsfile y va a realizar
+ la tarea segun la tenga o no
+
+ ## FILTROS ##
+
+ branch sources => filter => "filter by name (with willcards)"
+ en este sitio tenemos 2 caracteristicas (include y exclude)
+
+ en include aplicaremos todo "*"
+ y en esclude quitaremos todo lo que contenga "dev-*"
+
+ ############ segundo caso ##########
+
+ solo en include colocar "main fix-*"
+
+ como segundo paso agregaremos nuevamente add (pero en vez de filter) colocamos 
+ check out to matching local branch
+ luego agregar => clean after checkout
+ luego agregar => clean before checkout
+
+ IMPORTANTE : siempre que termine de de realizarse cambios en la tarea de tipo
+ multibranch realizara un escaneo automatico
